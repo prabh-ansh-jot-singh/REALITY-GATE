@@ -6,6 +6,7 @@ Loads .env configuration via python-dotenv with safe local defaults.
 from __future__ import annotations
 
 import os
+import tempfile
 from pathlib import Path
 from typing import Dict
 
@@ -17,8 +18,18 @@ except Exception:
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = BASE_DIR
-LOGS_DIR = Path(os.getenv("REALITY_GATE_LOGS_DIR", str(BASE_DIR / "logs")))
+IS_SERVERLESS = bool(
+    os.getenv("VERCEL")
+    or os.getenv("VERCEL_ENV")
+    or os.getenv("AWS_LAMBDA_FUNCTION_NAME")
+)
+DATA_DIR = (Path(tempfile.gettempdir()) / "reality_gate") if IS_SERVERLESS else BASE_DIR
+LOGS_DIR = Path(
+    os.getenv(
+        "REALITY_GATE_LOGS_DIR",
+        str(DATA_DIR / "logs"),
+    )
+)
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
 DB_PATH = Path(os.getenv("REALITY_GATE_DB_PATH", str(DATA_DIR / "reality_gate.db")))
